@@ -1,0 +1,24 @@
+.mainhead{
+    font-style: italic;
+    font-size: 40px;
+    color: rgb(235, 239, 240);
+    text-decoration: none;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+.nav-style{
+    /* background-color: rgb(6, 37, 63);
+     */
+
+
+     background: linear-gradient(90deg, rgb(6, 37, 63), rgb(60, 132, 146));
+}
+
+.sub-head{
+     font-style: italic;
+    color: rgb(235, 239, 240);
+    text-decoration: none;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+.footer1{
+      background: linear-gradient(90deg, rgb(6, 37, 63), rgb(60, 132, 146));
+}
