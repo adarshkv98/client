@@ -1,0 +1,30 @@
+/* Remove all default browser/Bootstrap white spaces */
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: #0d0628 !important; /* match your page background */
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure Bootstrap containers don’t add unwanted padding */
+.container,
+.container-fluid,
+.row,
+.col {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Optional: if your page is wrapped in any outer div or section */
+#root,
+.App,
+.seat-page {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: #0d0628 !important;
+}

@@ -13,76 +13,92 @@ const Navbar = () => {
 
   return (
     <nav
-      className="navbar navbar-expand-lg navbar-dark py-3"
+      className="navbar navbar-expand-lg navbar-dark"
       style={{
-        background: "linear-gradient(90deg, #0f0c29, #302b63, #24243e)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+        background: "linear-gradient(90deg, #1a0033, #3a006e)",
+        padding: "15px 50px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
       }}
     >
-      <div className="container">
-        {/* 🔗 CineAura logo also links to Home */}
+      <div className="container-fluid">
+        {/* ✅ Logo */}
         <Link
           to="/"
-          className="navbar-brand fw-bold text-white"
+          className="navbar-brand fw-bold"
           style={{
-            fontFamily: "'Cinzel Decorative', cursive",
+            fontSize: "1.8rem",
             letterSpacing: "1px",
-            fontSize: "1.5rem",
-            textDecoration: "none",
+            color: "#fff",
+            fontFamily: "Cinzel, serif",
           }}
         >
-          CineAura
+          CINEAURA
         </Link>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto text-uppercase fw-semibold">
-            <li className="nav-item">
-              <Link className="nav-link text-light px-3" to="/">
-                Home
+        <div className="d-flex align-items-center gap-4">
+          {/* ✅ If user logged in → show Dashboard + Profile + Logout */}
+          {user ? (
+            <>
+              <Link
+                to="/dashboard"
+                className="nav-link text-light fw-semibold"
+                style={{ fontSize: "1rem" }}
+              >
+                MOVIES
               </Link>
-            </li>
 
-            <li className="nav-item">
-              <Link className="nav-link text-light px-3" to="/register">
-                Register
+              <Link
+                to="/profile/me"
+                className="nav-link text-light fw-semibold"
+                style={{ fontSize: "1rem" }}
+              >
+                PROFILE
               </Link>
-            </li>
 
-            {user ? (
-              <li className="nav-item">
-                <button
-                  onClick={handleLogout}
-                  className="nav-link text-light px-3 bg-transparent border-0"
-                  style={{ cursor: "pointer" }}
-                >
-                  Logout
-                </button>
-              </li>
-            ) : (
-              <li className="nav-item">
-                <Link className="nav-link text-light px-3" to="/login">
-                  Login
-                </Link>
-              </li>
-            )}
-          </ul>
+              <button
+                onClick={handleLogout}
+                className="btn btn-sm"
+                style={{
+                  backgroundColor: "#fca311",
+                  color: "#1a0033",
+                  fontWeight: "600",
+                  borderRadius: "20px",
+                  padding: "6px 14px",
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              {/* ✅ Before login → show Home + Register + Login */}
+              <Link
+                to="/"
+                className="nav-link text-light fw-semibold"
+                style={{ fontSize: "1rem" }}
+              >
+                HOME
+              </Link>
+
+              <Link
+                to="/register"
+                className="nav-link text-light fw-semibold"
+                style={{ fontSize: "1rem" }}
+              >
+                REGISTER
+              </Link>
+
+              <Link
+                to="/login"
+                className="nav-link text-light fw-semibold"
+                style={{ fontSize: "1rem" }}
+              >
+                LOGIN
+              </Link>
+            </>
+          )}
         </div>
       </div>
-
-      {/* 🎨 Google Fonts */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap"
-        rel="stylesheet"
-      />
     </nav>
   );
 };

@@ -1,3 +1,4 @@
+// src/pages/LoginPage.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axiosConfig";
@@ -16,8 +17,13 @@ function LoginPage() {
     setLoading(true);
     try {
       const res = await axios.post("/users/login", { email, password });
-      login(res.data);
-      navigate("/dashboard");
+
+      if (res.data && res.data.user && res.data.token) {
+        login(res.data); // ✅ persist user & token
+        navigate("/dashboard");
+      } else {
+        alert("Invalid response from server.");
+      }
     } catch (err) {
       console.error(err);
       alert("Login failed! Please check your credentials.");
@@ -45,7 +51,6 @@ function LoginPage() {
           border: "1px solid rgba(255, 255, 255, 0.15)",
           backdropFilter: "blur(12px)",
           color: "#fff",
-          margin: "0", // ✅ remove white margin
         }}
       >
         <div className="text-center mb-4">

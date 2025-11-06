@@ -35,12 +35,11 @@ const UserDashboard = () => {
   return (
     <>
       <div
-        className="min-vh-100 text-light d-flex flex-column "
+        className="dashboard-page text-light d-flex flex-column"
         style={{
+          minHeight: "100vh",
           background: "linear-gradient(135deg, #1a0324, #230a41)",
-          margin: 0,
-          padding: 0,
-          overflowX: "hidden",
+          overflow: "visible", // ✅ allow normal scrolling only on body
         }}
       >
         {/* 🌌 Navbar */}
@@ -49,7 +48,6 @@ const UserDashboard = () => {
           style={{
             background: "linear-gradient(90deg, #0f0c29, #302b63, #24243e)",
             boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
-            marginBottom: 0,
           }}
         >
           <h2
@@ -96,13 +94,7 @@ const UserDashboard = () => {
         </nav>
 
         {/* 🌟 Hero Section */}
-        <div
-          className="text-center py-5"
-          style={{
-            marginTop: 0,
-            marginBottom: 0,
-          }}
-        >
+        <div className="text-center py-5 m-0">
           <h1 className="fw-bold display-5 text-white brand-font glow-text mb-3">
             Welcome to CineAura
           </h1>
@@ -113,7 +105,7 @@ const UserDashboard = () => {
 
         {/* 🎥 Movies Grid */}
         <div className="container-fluid px-4 pb-5">
-          <div className="row g-4 justify-content-center">
+          <div className="row g-4 justify-content-center m-0">
             {movies.length === 0 ? (
               <p className="text-center text-light mt-5">
                 No movies available right now.
@@ -173,51 +165,46 @@ const UserDashboard = () => {
 
         {/* ✨ Custom CSS */}
         <style>{`
-
-        /* 🔧 Fix unwanted white gap between movie grid and footer */
-.container-fluid,
-.container {
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-.row {
-  margin-bottom: 0 !important;
-}
-
-body,
-html {
-  margin: 0;
-  padding: 0;
-  background-color: transparent;
-}
-
-/* ensure footer sticks directly under content */
-footer {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
           * {
             font-family: 'Poppins', sans-serif;
           }
+
+          html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto; /* ✅ Only this scrollbar remains */
+            overflow-x: hidden;
+            background-color: #1a0324;
+          }
+
+          .dashboard-page {
+            overflow: visible !important; /* ✅ Removes inner scroll */
+          }
+
           .brand-font {
             font-family: 'Cinzel Decorative', cursive;
             letter-spacing: 2px;
           }
+
           .movie-card:hover {
             transform: scale(1.03);
           }
+
           .movie-card:hover img {
             transform: scale(1.05);
           }
+
           .glow-text {
             text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+          }
+
+          footer {
+            margin-top: auto;
           }
         `}</style>
       </div>
 
-      {/* Footer */}
       <Footer />
     </>
   );

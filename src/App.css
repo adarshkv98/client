@@ -46,4 +46,9 @@ body {
   background: radial-gradient(circle at top, #2d0a44, #0e0019);
   color: #f8f9fa;
 }
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
