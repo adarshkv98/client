@@ -1,8 +1,9 @@
 import axios from "axios";
 
+// Render production server
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
-  withCredentials: true,
+  baseURL: "https://server-eom8.onrender.com/api",
+  withCredentials: true,  // cookies / auth support
 });
 
 api.interceptors.request.use((config) => {
