@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "../api/axiosConfig";
-import Navbar from "../components/Navbar"; // ✅ Logged-in navbar
-import Footer from "../components/Footer"; // ✅ Footer
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 function MovieDetailsPage() {
   const { id } = useParams();
@@ -37,10 +37,8 @@ function MovieDetailsPage() {
 
   return (
     <>
-      {/* ✅ Navbar */}
       <Navbar />
 
-      {/* 🎬 Movie Details */}
       <div
         className="text-light"
         style={{
@@ -53,7 +51,7 @@ function MovieDetailsPage() {
       >
         <div className="container-fluid">
           <div className="row align-items-center justify-content-center">
-            {/* Poster */}
+            {/* 🎞 Poster */}
             <div className="col-lg-5 mb-4 text-center">
               <img
                 src={movie.posterUrl}
@@ -68,7 +66,7 @@ function MovieDetailsPage() {
               />
             </div>
 
-            {/* Details */}
+            {/* 🎬 Details */}
             <div className="col-lg-6 text-start">
               <h1
                 className="fw-bold mb-3 text-uppercase"
@@ -100,6 +98,25 @@ function MovieDetailsPage() {
               >
                 {movie.description}
               </p>
+
+              {/* 👨‍🎤 CAST SECTION */}
+              {movie.cast && movie.cast.length > 0 && (
+                <div className="mt-5">
+                  <h4 className="fw-bold text-uppercase mb-3">Cast</h4>
+                  <ul className="list-unstyled">
+                    {movie.cast.map((member, index) => (
+                      <li
+                        key={index}
+                        className="mb-2"
+                        style={{ color: "rgba(255,255,255,0.9)" }}
+                      >
+                        🎭 <strong>{member.actorName}</strong> as{" "}
+                        <span className="text-warning">{member.role}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* 🎟️ Buttons */}
               <div className="mt-5 d-flex flex-wrap gap-3">
@@ -142,7 +159,6 @@ function MovieDetailsPage() {
         `}</style>
       </div>
 
-      {/* ✅ Footer */}
       <Footer />
     </>
   );

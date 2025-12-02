@@ -12,25 +12,31 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await axios.post("/users/login", { email, password });
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const res = await axios.post("/users/login", { email, password });
 
-      if (res.data && res.data.user && res.data.token) {
-        login(res.data); // ✅ persist user & token
-        navigate("/dashboard");
+    if (res.data && res.data.user && res.data.token) {
+      login(res.data); // save user + token to context/localStorage
+
+      // ✅ Redirect based on role
+      if (res.data.user.isAdmin) {
+        navigate("/admin");
       } else {
-        alert("Invalid response from server.");
+        navigate("/dashboard");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Login failed! Please check your credentials.");
-    } finally {
-      setLoading(false);
+    } else {
+      alert("Invalid response from server.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Login failed! Please check your credentials.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div

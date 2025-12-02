@@ -42,7 +42,7 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
-            path="/profile"
+            path="/profile/me"
             element={
               <ProtectedRoute>
                 <ProfilePage />

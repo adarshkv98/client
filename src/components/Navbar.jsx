@@ -36,9 +36,20 @@ const Navbar = () => {
         </Link>
 
         <div className="d-flex align-items-center gap-4">
-          {/* ✅ If user logged in → show Dashboard + Profile + Logout */}
+          {/* ✅ If user logged in → show Dashboard/Profile/Logout */}
           {user ? (
             <>
+              {/* 🟣 Show admin dashboard if user is admin */}
+              {user.isAdmin && (
+                <Link
+                  to="/admin"
+                  className="nav-link text-light fw-semibold"
+                  style={{ fontSize: "1rem" }}
+                >
+                  ADMIN 
+                </Link>
+              )}
+
               <Link
                 to="/dashboard"
                 className="nav-link text-light fw-semibold"
@@ -71,7 +82,7 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              {/* ✅ Before login → show Home + Register + Login */}
+              {/* ✅ Before login → show Home/Register/Login */}
               <Link
                 to="/"
                 className="nav-link text-light fw-semibold"
