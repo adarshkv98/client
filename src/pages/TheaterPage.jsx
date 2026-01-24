@@ -46,7 +46,7 @@ function TheaterPage() {
         setTheaters(fetchedTheaters);
         setSelectedDate(dates[0].full);
       } catch (err) {
-        console.error("❌ Error fetching theaters:", err);
+        console.error("Error fetching theaters:", err);
         setError("Failed to load theaters");
       } finally {
         setLoading(false);

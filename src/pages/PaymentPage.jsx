@@ -35,7 +35,7 @@ const PaymentPage = () => {
 
     if (paymentMethod === "Razorpay") {
       try {
-        const { data } = await axios.post("http://localhost:3000/api/payment/orders", {
+        const { data } = await axios.post("https://server-eom8.onrender.com/api/payment/orders", {
           amount: totalAmount,
         });
 

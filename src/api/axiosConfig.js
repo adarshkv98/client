@@ -1,8 +1,10 @@
 import axios from "axios";
 
-// Render production server
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/users"; 
+// in production, VITE_API_URL = "https://server-eom8.onrender.com/api"
+
 const api = axios.create({
-  baseURL: "https://server-eom8.onrender.com/api",
+  baseURL: BASE_URL,
   withCredentials: true,  // cookies / auth support
 });
 

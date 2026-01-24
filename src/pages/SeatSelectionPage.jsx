@@ -51,7 +51,7 @@ const SeatSelectionPage = () => {
         );
         setBookedSeats(bookedRes.data.bookedSeats || []);
       } catch (err) {
-        console.error("❌ Error fetching details:", err);
+        console.error("Error fetching details:", err);
       } finally {
         setLoading(false);
       }
@@ -71,7 +71,7 @@ const SeatSelectionPage = () => {
       prev.includes(seatId)
         ? prev.filter((s) => s !== seatId)
         : prev.length >= 10
-        ? (alert("❌ Max 10 seats per booking"), prev)
+        ? (alert(" Max 10 seats per booking"), prev)
         : [...prev, seatId]
     );
   };

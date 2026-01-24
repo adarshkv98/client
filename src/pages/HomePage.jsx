@@ -15,7 +15,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/movies");
+        const res = await axios.get("https://server-eom8.onrender.com/api/movies");
         if (Array.isArray(res.data.movies)) setMovies(res.data.movies);
         else if (Array.isArray(res.data)) setMovies(res.data);
         else setMovies([]);
