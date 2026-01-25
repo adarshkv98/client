@@ -21,7 +21,7 @@ function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("🔍 Looking for Showtime...");
+        console.log("🔍 Looking for Showtime (IST Mode)...");
         console.log("URL Data:", { id, theaterId, date, time });
 
         // 1. Fetch Movie & Theater
@@ -40,11 +40,15 @@ function BookingPage() {
           setTheater({ name: theaterName || "Unknown Theater" });
         }
 
-        // 2. Find matching Showtime (FINAL FIX)
+        // 2. Find matching Showtime (Strictly IST)
         if (showtimeRes.data) {
             const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
             
-            // Step A: Filter by Movie and Theater first
+            // Format URL Date to string for comparison
+            const urlDateString = new Date(date).toDateString(); // e.g., "Sun Jan 25 2026"
+            const urlTimeClean = time.replace(/\s/g, '').toLowerCase(); // "10:00am"
+
+            // Step A: Filter Candidates
             const candidates = allShowtimes.filter((s) => {
                 const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
                 const sTheaterId = typeof s.theater === 'object' ? s.theater._id : s.theater;
@@ -52,45 +56,44 @@ function BookingPage() {
                 // ID Check
                 if (String(sMovieId) !== String(id)) return false;
                 if (theaterId && String(sTheaterId) !== String(theaterId)) return false;
-                return true;
+
+                // Date Check (Convert DB time to IST Date String)
+                const dbDateObj = new Date(s.startTime);
+                // We check if the date part matches
+                // Note: Using simpler toDateString match often works best if timezone shifts aren't huge, 
+                // but for strict IST we can do this:
+                return dbDateObj.toDateString() === urlDateString; 
             });
 
             console.log(`🎬 Candidates found: ${candidates.length}`);
 
-            // Step B: Smart Match (Date & Time)
+            // Step B: Match Time in IST
             let foundShowtime = candidates.find((s) => {
-                // Use Local Browser Time for Date Comparison (Safest for UI)
-                const sDate = new Date(s.startTime).toDateString();
-                const uDate = new Date(date).toDateString();
+                const dbDateObj = new Date(s.startTime);
 
-                if (sDate !== uDate) return false;
+                // ✅ CONVERT DB TIME TO IST (Asia/Kolkata)
+                const timeIST = dbDateObj.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: true,
+                    timeZone: "Asia/Kolkata" // <--- IST FIXED
+                });
 
-                // Time Comparison: Remove all spaces and special chars
-                // Example: "10:00 AM" -> "1000am"
-                const cleanTargetTime = time.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                const dbTimeClean = timeIST.replace(/\s/g, '').toLowerCase();
+
+                console.log(`Checking: DB(IST): ${dbTimeClean} vs URL: ${urlTimeClean}`);
                 
-                // Check against UTC, IST, and Local
-                const dateObj = new Date(s.startTime);
-                const options = { hour: "numeric", minute: "numeric", hour12: true };
-                
-                const timeUTC = dateObj.toLocaleTimeString("en-US", { ...options, timeZone: "UTC" }).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                const timeIST = dateObj.toLocaleTimeString("en-US", { ...options, timeZone: "Asia/Kolkata" }).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                const timeLocal = dateObj.toLocaleTimeString("en-US", options).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
-                return (cleanTargetTime === timeUTC) || (cleanTargetTime === timeIST) || (cleanTargetTime === timeLocal);
+                return dbTimeClean === urlTimeClean;
             });
 
-            // Step C: Fallback (If exact time fails, take the ONLY show on that date)
+            // Step C: Fallback (Safety Net)
+            // If exact IST match fails (e.g. 1 minute difference), but only 1 show exists, pick it.
             if (!foundShowtime) {
-                const dateMatches = candidates.filter(s => 
-                    new Date(s.startTime).toDateString() === new Date(date).toDateString()
-                );
-
-                if (dateMatches.length === 1) {
-                    console.log("⚠️ Exact time mismatch, but found 1 valid show for this date. Using it.");
-                    foundShowtime = dateMatches[0];
-                } else if (dateMatches.length > 1) {
-                    console.warn("❌ Multiple shows on this date. Cannot guess correctly.");
+                if (candidates.length === 1) {
+                    console.log("⚠️ Exact IST time mismatch, but found 1 valid show. Using it.");
+                    foundShowtime = candidates[0];
+                } else if (candidates.length > 1) {
+                    console.warn("❌ Multiple shows found, but time didn't match.");
                 }
             }
 
@@ -117,8 +120,7 @@ function BookingPage() {
     }
 
     if (!showtimeId) {
-        // Detailed error for debugging
-        alert(`Error: Showtime not verified.\n\nDate: ${new Date(date).toLocaleDateString()}\nTime: ${time}\n\nPlease go back and select the show again.`);
+        alert("Error: Showtime not verified. Please try selecting the show again.");
         return;
     }
 
