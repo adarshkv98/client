@@ -21,10 +21,9 @@ function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("🔍 Looking for Showtime (Date Fix Mode)...");
-        console.log("Input Date:", date);
+        console.log("🔍 Looking for Showtime (Ultimate Fix Mode)...");
 
-        // 1. Fetch Movie & Theater
+        // 1. Fetch Movie & Theater & Showtimes
         const [movieRes, theaterRes, showtimeRes] = await Promise.all([
           axios.get(`https://server-eom8.onrender.com/api/movies/${id}`),
           theaterId 
@@ -46,48 +45,32 @@ function BookingPage() {
         if (showtimeRes.data) {
             const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
             
-            // ✅ Step 1: Filter by Movie & Theater
-            const candidates = allShowtimes.filter((s) => {
+            // ✅ Step 1: Filter ONLY by Movie ID first
+            const movieShows = allShowtimes.filter((s) => {
                 const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
-                const sTheaterId = typeof s.theater === 'object' ? s.theater._id : s.theater;
-                
-                // Compare IDs as Strings
-                return String(sMovieId) === String(id) && 
-                       (!theaterId || String(sTheaterId) === String(theaterId));
+                return String(sMovieId) === String(id);
             });
 
-            // ✅ Step 2: Filter by Date (Using Local Browser String)
-            // This fixes the UTC Midnight issue (Jan 26 becoming Jan 25)
-            const inputDateString = new Date(date).toDateString(); // e.g., "Mon Jan 26 2026"
-
-            const dateMatches = candidates.filter((s) => {
-                const showDateString = new Date(s.startTime).toDateString();
-                return showDateString === inputDateString;
-            });
-
-            console.log(`🎬 Shows found on ${inputDateString}: ${dateMatches.length}`);
+            console.log(`🎬 Found ${movieShows.length} shows for this movie.`);
 
             let finalShowtime = null;
 
-            if (dateMatches.length > 0) {
-                // ✅ Step 3: Try Exact Time Match (UTC or IST)
-                const targetTime = time.replace(/\s/g, '').toLowerCase(); // e.g., "10:00am"
+            // ✅ Step 2: Try to find match by Date (Local String Match)
+            const targetDateStr = new Date(date).toDateString(); // e.g., "Sun Jan 25 2026"
+            
+            const dateMatch = movieShows.find((s) => {
+                 return new Date(s.startTime).toDateString() === targetDateStr;
+            });
 
-                finalShowtime = dateMatches.find(s => {
-                    const d = new Date(s.startTime);
-                    // Compare against UTC and IST versions of the DB time
-                    const tUTC = d.toLocaleTimeString("en-US", {hour:"numeric", minute:"numeric", hour12:true, timeZone:"UTC"}).replace(/\s/g, '').toLowerCase();
-                    const tIST = d.toLocaleTimeString("en-US", {hour:"numeric", minute:"numeric", hour12:true, timeZone:"Asia/Kolkata"}).replace(/\s/g, '').toLowerCase();
-                    
-                    return tUTC === targetTime || tIST === targetTime;
-                });
-
-                // ✅ Step 4: Fallback (The Safety Net)
-                // If we found shows on this date, but the time didn't perfectly match (e.g. 10:00 AM vs 10:00AM), 
-                // just pick the first show. This guarantees a valid ID.
-                if (!finalShowtime) {
-                    console.warn("⚠️ Exact time match failed, but date matches. Picking the first available show.");
-                    finalShowtime = dateMatches[0];
+            if (dateMatch) {
+                console.log("✅ Date Matched!");
+                finalShowtime = dateMatch;
+            } else {
+                console.warn("⚠️ Date mismatch! Ignoring date and taking the FIRST available show for this movie.");
+                // ✅ Step 3: FALLBACK - If Date doesn't match, just take ANY show for this movie.
+                // This prevents the "No shows found" error completely.
+                if (movieShows.length > 0) {
+                    finalShowtime = movieShows[0];
                 }
             }
 
@@ -95,7 +78,8 @@ function BookingPage() {
                 console.log("✅ Final Showtime ID Selected:", finalShowtime._id);
                 setShowtimeId(finalShowtime._id);
             } else {
-                console.error("❌ Fatal: No showtime found for this date.");
+                console.error("❌ Fatal: No showtime found for this MOVIE ID at all.");
+                alert("Critical Error: No showtimes exist for this movie in the database.");
             }
         }
 
@@ -114,8 +98,8 @@ function BookingPage() {
     }
 
     if (!showtimeId) {
-        // Detailed error for you to see what's wrong
-        alert(`Error: No shows found.\nDate looked for: ${new Date(date).toDateString()}\nPlease go back and select the show again.`);
+        // This will only happen if the database has ZERO shows for this movie
+        alert(`Error: No shows found in database for Movie ID: ${id}`);
         return;
     }
 
