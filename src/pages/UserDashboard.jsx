@@ -13,7 +13,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const res = await axios.get("/movies");
+        const res = await axios.get("https://server-eom8.onrender.com/api/movies");
         if (Array.isArray(res.data.movies)) setMovies(res.data.movies);
         else setMovies([]);
       } catch (err) {
