@@ -103,10 +103,10 @@ const AdminDashboard = () => {
       };
 
       if (editMovieId) {
-        await api.put(`/movies/${editMovieId}`, payload);
+        await api.put(`https://server-eom8.onrender.com/api/movies/${editMovieId}`, payload);
         setEditMovieId(null);
       } else {
-        await api.post("/movies", payload);
+        await api.post("https://server-eom8.onrender.com/api/movies", payload);
       }
 
       setMovieForm({
@@ -149,7 +149,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete movie?")) return;
 
     try {
-      await api.delete(`/movies/${id}`);
+      await api.delete(`https://server-eom8.onrender.com/api/movies/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
@@ -179,10 +179,10 @@ const AdminDashboard = () => {
       };
 
       if (editTheaterId) {
-        await api.put(`/theaters/${editTheaterId}`, payload);
+        await api.put(`https://server-eom8.onrender.com/api/theaters/${editTheaterId}`, payload);
         setEditTheaterId(null);
       } else {
-        await api.post("/theaters", payload);
+        await api.post("https://server-eom8.onrender.com/api/theaters", payload);
       }
 
       setTheaterForm({ name: "", city: "", address: "", screens: 1 });
@@ -209,7 +209,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete theater?")) return;
 
     try {
-      await api.delete(`/theaters/${id}`);
+      await api.delete(`https://server-eom8.onrender.com/api/theaters/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
@@ -230,10 +230,10 @@ const AdminDashboard = () => {
       };
 
       if (editShowtimeId) {
-        await api.put(`/showtimes/${editShowtimeId}`, payload);
+        await api.put(`https://server-eom8.onrender.com/api/showtimes/${editShowtimeId}`, payload);
         setEditShowtimeId(null);
       } else {
-        await api.post("/showtimes", payload);
+        await api.post("https://server-eom8.onrender.com/api/showtimes", payload);
       }
 
       setShowtimeForm({
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete showtime?")) return;
 
     try {
-      await api.delete(`/showtimes/${id}`);
+      await api.delete(`https://server-eom8.onrender.com/api/showtimes/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
