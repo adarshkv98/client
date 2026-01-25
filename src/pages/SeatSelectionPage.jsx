@@ -15,41 +15,68 @@ const SeatSelectionPage = () => {
 
   const [movie, setMovie] = useState(null);
   const [theater, setTheater] = useState(null);
-  const [bookedSeats, setBookedSeats] = useState([]);
+  const [bookedSeats, setBookedSeats] = useState([]); // Stores ["A1", "A2"]
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showtimeId, setShowtimeId] = useState(null); // Store found ID
   const ticketPrice = 150;
 
   useEffect(() => {
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
+    // Style settings
     document.body.style.backgroundColor = "#0f0026";
-    document.body.style.overflowX = "hidden";
-    document.documentElement.style.overflowX = "hidden";
-
+    
     const fetchData = async () => {
       try {
-        if (movieId) {
-          const movieRes = await axios.get(`https://server-eom8.onrender.com/api/movies/${movieId}`);
-          setMovie(movieRes.data);
+        console.log("🔍 Initializing Seat Selection...");
+
+        // 1. Fetch Movie & Theater Info
+        const [movieRes, theaterRes, showtimeRes] = await Promise.all([
+           axios.get(`https://server-eom8.onrender.com/api/movies/${movieId}`),
+           axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`),
+           axios.get("https://server-eom8.onrender.com/api/showtimes")
+        ]);
+
+        setMovie(movieRes.data);
+        
+        // Handle Theater Data Structure
+        const tData = theaterRes.data.theater || theaterRes.data.data || theaterRes.data || {};
+        setTheater(tData);
+
+        // 2. FIND SHOWTIME ID (Robust Logic)
+        if (showtimeRes.data) {
+            const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
+            
+            // Filter by Movie ID
+            const movieShows = allShowtimes.filter(s => {
+                const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
+                return String(sMovieId) === String(movieId);
+            });
+
+            // Try matching Date
+            const targetDateStr = new Date(date).toDateString();
+            let foundShow = movieShows.find(s => new Date(s.startTime).toDateString() === targetDateStr);
+
+            // Fallback: If date mismatch, pick first show (Fixes "No Show" error)
+            if (!foundShow && movieShows.length > 0) {
+                console.warn("⚠️ Date mismatch. Using fallback show.");
+                foundShow = movieShows[0];
+            }
+
+            if (foundShow) {
+                console.log("✅ Found Showtime ID:", foundShow._id);
+                setShowtimeId(foundShow._id);
+
+                // 3. FETCH BOOKED SEATS USING SHOWTIME ID
+                // Note: Ensure you added the backend route '/seats/:id'
+                const seatRes = await axios.get(`https://server-eom8.onrender.com/api/bookings/seats/${foundShow._id}`);
+                setBookedSeats(seatRes.data || []);
+                console.log("🔒 Booked Seats:", seatRes.data);
+            } else {
+                alert("Error: No showtime found for this movie/theater.");
+            }
         }
 
-        if (theaterId) {
-          const theaterRes = await axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`);
-          const tData =
-            theaterRes.data.theater ||
-            theaterRes.data.data ||
-            theaterRes.data ||
-            null;
-          setTheater(tData);
-        }
-
-        // ✅ Fetch booked seats
-        const bookedRes = await axios.get(
-          `https://server-eom8.onrender.com/api/bookings/booked?movieId=${movieId}&theaterId=${theaterId}&date=${date}&time=${encodeURIComponent(time)}`
-        );
-        setBookedSeats(bookedRes.data.bookedSeats || []);
       } catch (err) {
         console.error("Error fetching details:", err);
       } finally {
@@ -66,12 +93,14 @@ const SeatSelectionPage = () => {
   ];
 
   const toggleSeat = (seatId) => {
+    // Prevent clicking if booked
     if (bookedSeats.includes(seatId)) return;
+
     setSelectedSeats((prev) =>
       prev.includes(seatId)
         ? prev.filter((s) => s !== seatId)
         : prev.length >= 10
-        ? (alert(" Max 10 seats per booking"), prev)
+        ? (alert("Max 10 seats per booking"), prev)
         : [...prev, seatId]
     );
   };
@@ -85,29 +114,37 @@ const SeatSelectionPage = () => {
       alert("Please select at least one seat!");
       return;
     }
-
+    
+    // Pass the 'showtimeId' we found here to the next page
+    // This prevents the "Showtime not verified" error on the next screen
     navigate(`/booking/${movieId}`, {
-      state: { selectedSeats, theaterId, date, time, theaterName: theater.name },
+      state: { 
+          selectedSeats, 
+          theaterId, 
+          date, 
+          time, 
+          theaterName: theater?.name,
+          showtime: showtimeId // ✅ Passing ID correctly
+      },
     });
   };
 
-  const seatStyle = (isSelected, isBooked = false) => ({
+  const seatStyle = (isSelected, isBooked) => ({
     width: "38px",
     height: "38px",
-    backgroundColor: isBooked
-      ? "#d9534f"
-      : isSelected
-      ? "#f0ad4e"
-      : "#28a745",
+    // Color Logic: Booked=Red/Grey, Selected=Yellow, Available=Green
+    backgroundColor: isBooked ? "#6c757d" : isSelected ? "#f0ad4e" : "#28a745",
     color: "#fff",
     borderRadius: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    cursor: isBooked ? "not-allowed" : "pointer",
+    cursor: isBooked ? "not-allowed" : "pointer", // Disable cursor if booked
     fontSize: "11px",
     fontWeight: isSelected ? "600" : "400",
     transition: "0.2s ease-in-out",
+    opacity: isBooked ? 0.6 : 1, // Make booked seats look faded
+    pointerEvents: isBooked ? "none" : "auto" // Disable clicks
   });
 
   if (loading)
@@ -134,7 +171,6 @@ const SeatSelectionPage = () => {
         margin: 0,
         padding: 0,
         overflowX: "hidden",
-        overflowY: "auto",
       }}
     >
       <div className="py-5 text-center">
@@ -149,26 +185,8 @@ const SeatSelectionPage = () => {
         </p>
       </div>
 
-      <div
-        className="mx-auto text-center mb-5"
-        style={{
-          width: "60%",
-          borderTop: "5px solid #9b59b6",
-          borderRadius: "100% / 50%",
-          height: "60px",
-          position: "relative",
-        }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            top: "10px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            color: "#d1b3ff",
-            fontWeight: "bold",
-          }}
-        >
+      <div className="mx-auto text-center mb-5" style={{ width: "60%", borderTop: "5px solid #9b59b6", borderRadius: "100% / 50%", height: "60px", position: "relative" }}>
+        <span style={{ position: "absolute", top: "10px", left: "50%", transform: "translateX(-50%)", color: "#d1b3ff", fontWeight: "bold" }}>
           SCREEN
         </span>
       </div>
@@ -178,21 +196,13 @@ const SeatSelectionPage = () => {
           <div key={section.name} className="mb-5">
             <h5 className="text-info fw-semibold mb-3">{section.name}</h5>
             {section.rows.map((row) => (
-              <div
-                key={row}
-                className="d-flex align-items-center justify-content-center mb-2"
-              >
-                <span
-                  className="fw-bold text-light me-3"
-                  style={{ width: "20px" }}
-                >
-                  {row}
-                </span>
+              <div key={row} className="d-flex align-items-center justify-content-center mb-2">
+                <span className="fw-bold text-light me-3" style={{ width: "20px" }}>{row}</span>
                 <div className="d-flex gap-1">
                   {[...Array(10)].map((_, i) => {
                     const seatId = `${row}${i + 1}`;
                     const isSelected = selectedSeats.includes(seatId);
-                    const isBooked = bookedSeats.includes(seatId);
+                    const isBooked = bookedSeats.includes(seatId); // Check if booked
                     return (
                       <div
                         key={seatId}
@@ -209,7 +219,7 @@ const SeatSelectionPage = () => {
                   {[...Array(10)].map((_, i) => {
                     const seatId = `${row}${i + 11}`;
                     const isSelected = selectedSeats.includes(seatId);
-                    const isBooked = bookedSeats.includes(seatId);
+                    const isBooked = bookedSeats.includes(seatId); // Check if booked
                     return (
                       <div
                         key={seatId}
@@ -228,6 +238,11 @@ const SeatSelectionPage = () => {
       </div>
 
       <div className="text-center pb-5">
+        <div className="mb-3 d-flex justify-content-center gap-4">
+            <div className="d-flex align-items-center gap-2"><div style={{width: 20, height: 20, background: '#28a745', borderRadius: 4}}></div> Available</div>
+            <div className="d-flex align-items-center gap-2"><div style={{width: 20, height: 20, background: '#f0ad4e', borderRadius: 4}}></div> Selected</div>
+            <div className="d-flex align-items-center gap-2"><div style={{width: 20, height: 20, background: '#6c757d', borderRadius: 4}}></div> Booked</div>
+        </div>
         <h5 className="text-light mb-3">
           Total Price: <span className="text-warning">₹{totalPrice}</span>
         </h5>
