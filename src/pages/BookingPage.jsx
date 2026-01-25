@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import axios from "../api/axiosConfig"; 
+import axios from "../api/axiosConfig";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function BookingPage() {
@@ -14,7 +14,7 @@ function BookingPage() {
 
   const [movie, setMovie] = useState(null);
   const [theater, setTheater] = useState(null);
-  const [showtimeId, setShowtimeId] = useState(null); 
+  const [showtimeId, setShowtimeId] = useState(null);
   const seatPrice = 150;
   const totalAmount = selectedSeats.length * seatPrice;
 
@@ -53,26 +53,31 @@ function BookingPage() {
                 const movieMatch = String(sMovieId) === String(id);
                 const theaterMatch = String(sTheaterId) === String(theaterId);
 
-                // 2. Check Date Match
-                // Using 'toDateString' to ignore time components and timezone shifts
+                // 2. Check Date Match (UTC Comparison to avoid timezone shift)
                 const showDateObj = new Date(s.startTime);
                 const urlDateObj = new Date(date);
-                const dateMatch = showDateObj.toDateString() === urlDateObj.toDateString();
                 
-                // 3. Check Time Match
+                // Compare UTC date parts because the server time is stored in UTC
+                const dateMatch = 
+                    showDateObj.getUTCFullYear() === urlDateObj.getFullYear() &&
+                    showDateObj.getUTCMonth() === urlDateObj.getMonth() &&
+                    showDateObj.getUTCDate() === urlDateObj.getDate();
+                
+                // 3. Check Time Match (FORCE UTC)
+                // ✅ CRITICAL FIX: Adding timeZone: "UTC" ensures "10:00 AM" stays "10:00 AM"
                 const showTimeFormatted = showDateObj.toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "numeric",
                     hour12: true,
+                    timeZone: "UTC" 
                 });
 
                 // Remove spaces and convert to lowercase for better matching
-                // e.g. "10:00 AM" becomes "10:00am"
                 const cleanShowTime = showTimeFormatted.replace(/\s/g, '').toLowerCase();
                 const cleanUrlTime = time.replace(/\s/g, '').toLowerCase();
                 const timeMatch = cleanShowTime === cleanUrlTime;
 
-                // Debugging Log (Browser Console-ൽ കാണാം)
+                // Debugging Log - Check Console if it fails
                 if (movieMatch && theaterMatch && dateMatch) {
                    console.log(`Checking Time: DB(${cleanShowTime}) vs URL(${cleanUrlTime}) -> Match? ${timeMatch}`);
                 }
@@ -84,8 +89,7 @@ function BookingPage() {
                 console.log("✅ Found Showtime ID:", foundShowtime._id);
                 setShowtimeId(foundShowtime._id);
             } else {
-                console.warn("❌ Showtime ID not found! Check Date/Time formats.");
-                // Fallback: If strict match fails, try relaxed match (optional)
+                console.warn("❌ Showtime ID not found! Check Console for mismatch.");
             }
         }
 
@@ -105,7 +109,7 @@ function BookingPage() {
 
     if (!showtimeId) {
         // More descriptive error
-        alert("Error: Showtime not verified. Check console for details.");
+        alert("Error: Showtime not verified. Please try selecting the show again from the home page.");
         return;
     }
 
@@ -115,7 +119,6 @@ function BookingPage() {
       location: theater?.location || {},
     };
 
-    
     navigate("/payment", {
       state: {
         movie,
