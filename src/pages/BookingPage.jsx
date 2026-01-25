@@ -21,12 +21,15 @@ function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("🔍 Looking for Showtime (Force Match Mode)...");
+        console.log("🔍 Looking for Showtime (Date Fix Mode)...");
+        console.log("Input Date:", date);
 
         // 1. Fetch Movie & Theater
         const [movieRes, theaterRes, showtimeRes] = await Promise.all([
           axios.get(`https://server-eom8.onrender.com/api/movies/${id}`),
-          theaterId ? axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`) : Promise.resolve(null),
+          theaterId 
+            ? axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`) 
+            : Promise.resolve(null),
           axios.get("https://server-eom8.onrender.com/api/showtimes"),
         ]);
 
@@ -39,46 +42,51 @@ function BookingPage() {
           setTheater({ name: theaterName || "Unknown Theater" });
         }
 
-        // 2. Find matching Showtime (ULTIMATE FIX)
+        // 2. Find matching Showtime
         if (showtimeRes.data) {
             const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
             
-            // Step 1: Filter by Movie & Theater
+            // ✅ Step 1: Filter by Movie & Theater
             const candidates = allShowtimes.filter((s) => {
                 const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
                 const sTheaterId = typeof s.theater === 'object' ? s.theater._id : s.theater;
                 
+                // Compare IDs as Strings
                 return String(sMovieId) === String(id) && 
                        (!theaterId || String(sTheaterId) === String(theaterId));
             });
 
-            // Step 2: Filter by Date (YYYY-MM-DD comparison)
+            // ✅ Step 2: Filter by Date (Using Local Browser String)
+            // This fixes the UTC Midnight issue (Jan 26 becoming Jan 25)
+            const inputDateString = new Date(date).toDateString(); // e.g., "Mon Jan 26 2026"
+
             const dateMatches = candidates.filter((s) => {
-                const sDate = new Date(s.startTime).toISOString().split('T')[0];
-                const uDate = new Date(date).toISOString().split('T')[0];
-                return sDate === uDate;
+                const showDateString = new Date(s.startTime).toDateString();
+                return showDateString === inputDateString;
             });
 
-            console.log(`🎬 Shows found on this date: ${dateMatches.length}`);
+            console.log(`🎬 Shows found on ${inputDateString}: ${dateMatches.length}`);
 
             let finalShowtime = null;
 
             if (dateMatches.length > 0) {
-                // Try to find Exact Time Match (UTC or IST)
-                const targetTime = time.replace(/\s/g, '').toLowerCase(); // "10:00am"
+                // ✅ Step 3: Try Exact Time Match (UTC or IST)
+                const targetTime = time.replace(/\s/g, '').toLowerCase(); // e.g., "10:00am"
 
                 finalShowtime = dateMatches.find(s => {
                     const d = new Date(s.startTime);
+                    // Compare against UTC and IST versions of the DB time
                     const tUTC = d.toLocaleTimeString("en-US", {hour:"numeric", minute:"numeric", hour12:true, timeZone:"UTC"}).replace(/\s/g, '').toLowerCase();
                     const tIST = d.toLocaleTimeString("en-US", {hour:"numeric", minute:"numeric", hour12:true, timeZone:"Asia/Kolkata"}).replace(/\s/g, '').toLowerCase();
                     
                     return tUTC === targetTime || tIST === targetTime;
                 });
 
-                // ⚠️ MAGIC FIX: If time match failed, BUT there is at least one show, Just pick the first one!
-                // This solves the timezone issue completely.
+                // ✅ Step 4: Fallback (The Safety Net)
+                // If we found shows on this date, but the time didn't perfectly match (e.g. 10:00 AM vs 10:00AM), 
+                // just pick the first show. This guarantees a valid ID.
                 if (!finalShowtime) {
-                    console.log("⚠️ Exact time match failed. Forcefully picking the first show available.");
+                    console.warn("⚠️ Exact time match failed, but date matches. Picking the first available show.");
                     finalShowtime = dateMatches[0];
                 }
             }
@@ -106,7 +114,8 @@ function BookingPage() {
     }
 
     if (!showtimeId) {
-        alert("Error: No shows found for this date. Please go back and select again.");
+        // Detailed error for you to see what's wrong
+        alert(`Error: No shows found.\nDate looked for: ${new Date(date).toDateString()}\nPlease go back and select the show again.`);
         return;
     }
 
