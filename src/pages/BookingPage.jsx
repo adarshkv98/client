@@ -1,45 +1,86 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import axios from "../api/axiosConfig";
+import axios from "../api/axiosConfig"; 
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function BookingPage() {
-  const { id } = useParams();
+  const { id } = useParams(); // Movie ID
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Get all passed data (including theaterName)
+  // Get passed data
   const { selectedSeats = [], theaterId, date, time, theaterName } =
     location.state || {};
 
   const [movie, setMovie] = useState(null);
   const [theater, setTheater] = useState(null);
+  const [showtimeId, setShowtimeId] = useState(null); 
   const seatPrice = 150;
   const totalAmount = selectedSeats.length * seatPrice;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const movieRes = await axios.get(`https://server-eom8.onrender.com/api/movies/${id}`);
+        // 1. Fetch Movie & Theater
+        const [movieRes, theaterRes, showtimeRes] = await Promise.all([
+          axios.get(`/movies/${id}`),
+          theaterId ? axios.get(`/theaters/${theaterId}`) : Promise.resolve(null),
+          axios.get("/showtimes"),
+        ]);
+
         setMovie(movieRes.data);
 
-        if (theaterId) {
-          const theaterRes = await axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`);
+        // Set Theater
+        if (theaterRes) {
           setTheater(theaterRes.data);
-        } else if (theaterName) {
-          // ✅ fallback if passed directly
-          setTheater({ name: theaterName });
         } else {
-          // fallback if both missing
-          setTheater({ name: "Unknown Theater" });
+          setTheater({ name: theaterName || "Unknown Theater" });
         }
+
+        
+        if (showtimeRes.data) {
+            const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
+            
+            const foundShowtime = allShowtimes.find((s) => {
+              
+                const movieMatch = s.movie?._id === id || s.movie === id;
+                const theaterMatch = s.theater?._id === theaterId || s.theater === theaterId;
+
+               
+                const showDate = new Date(s.startTime).toLocaleDateString();
+                const selectedDate = new Date(date).toLocaleDateString();
+                
+                
+                const showTimeFormatted = new Date(s.startTime).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: true,
+                });
+
+                
+                return (
+                    movieMatch &&
+                    theaterMatch &&
+                    showDate === selectedDate &&
+                    showTimeFormatted.replace(/\s/g, '') === time.replace(/\s/g, '')
+                );
+            });
+
+            if (foundShowtime) {
+                console.log("✅ Found Showtime ID:", foundShowtime._id);
+                setShowtimeId(foundShowtime._id);
+            } else {
+                console.warn("❌ Showtime ID not found for this slot!");
+            }
+        }
+
       } catch (err) {
         console.error("Error fetching booking data:", err);
       }
     };
 
     fetchData();
-  }, [id, theaterId, theaterName]);
+  }, [id, theaterId, theaterName, date, time]);
 
   const handleProceedToPayment = () => {
     if (!movie) {
@@ -47,17 +88,23 @@ function BookingPage() {
       return;
     }
 
-    // ✅ ensure proper theater data passed to PaymentPage
+    if (!showtimeId) {
+        alert("Error: Could not verify showtime. Please try again.");
+        return;
+    }
+
     const theaterData = {
       _id: theater?._id || theaterId,
       name: theater?.name || theaterName || "Unknown Theater",
       location: theater?.location || {},
     };
 
+   
     navigate("/payment", {
       state: {
         movie,
         theater: theaterData,
+        showtime: showtimeId, 
         date,
         time,
         selectedSeats,

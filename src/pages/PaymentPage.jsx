@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import api from "../api/axiosConfig"; 
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Getting state passed from BookingPage
-  const { movie, theater, date, time, selectedSeats, totalAmount } =
+ 
+  const { movie, theater, date, time, selectedSeats, totalAmount, showtime } =
     location.state || {};
 
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -21,40 +22,71 @@ const PaymentPage = () => {
   const [upiId, setUpiId] = useState("");
   const [theaterName, setTheaterName] = useState("");
 
-  // ✅ Fetch correct theater name if missing
   useEffect(() => {
-  setTheaterName(theater?.name || "Unknown Theater");
-}, [theater]);
+    setTheaterName(theater?.name || "Unknown Theater");
+  }, [theater]);
 
+ 
+  const saveBookingToDatabase = async (paymentId = "N/A") => {
+    try {
+      if (!showtime) {
+        alert("Error: Showtime ID missing. Booking cannot be saved.");
+        return;
+      }
 
+      const bookingData = {
+        movie: movie._id,
+        theater: theater._id,
+        showtime: showtime, 
+        seats: selectedSeats,
+        totalPrice: totalAmount,
+        paymentId: paymentId, 
+        date: date,
+        time: time
+      };
+
+      console.log("Saving Booking:", bookingData); 
+      // Backend Call
+      await api.post("/bookings", bookingData);
+
+      alert("✅ Payment & Booking Successful!");
+      
+      navigate("/confirmation", {
+        state: { movie, theater, date, time, selectedSeats, totalAmount, paymentId },
+      });
+
+    } catch (error) {
+      console.error("Booking Save Error:", error);
+      alert("⚠️ Payment deducted but Booking Failed! Contact support.");
+    }
+  };
 
   const handlePayment = async (e) => {
     e.preventDefault();
 
     if (!paymentMethod) return alert("Please select a payment method");
 
+    // --- RAZORPAY LOGIC ---
     if (paymentMethod === "Razorpay") {
       try {
-        const { data } = await axios.post("https://server-eom8.onrender.com/api/payment/orders", {
+        const { data } = await api.post("/payment/orders", {
           amount: totalAmount,
         });
 
         const options = {
-          key: "YOUR_RAZORPAY_KEY_ID",
+          key: "YOUR_RAZORPAY_KEY_ID", 
           amount: data.amount,
           currency: data.currency,
           name: "CineAura",
           description: `Payment for ${movie?.title}`,
           order_id: data.id,
           handler: function (response) {
-            alert("✅ Payment Successful!");
-            navigate("/confirmation", {
-              state: { movie, theater, date, time, selectedSeats, totalAmount },
-            });
+            
+            saveBookingToDatabase(response.razorpay_payment_id);
           },
           prefill: {
-            name: "Adarsh KV",
-            email: "adarsh@example.com",
+            name: "User Name",
+            email: "user@example.com",
             contact: "9999999999",
           },
           theme: {
@@ -71,10 +103,7 @@ const PaymentPage = () => {
       return;
     }
 
-    alert(`✅ Payment successful via ${paymentMethod}!`);
-    navigate("/confirmation", {
-      state: { movie, theater, date, time, selectedSeats, totalAmount },
-    });
+    await saveBookingToDatabase(`DUMMY_${paymentMethod.toUpperCase()}_ID`);
   };
 
   return (
@@ -97,7 +126,7 @@ const PaymentPage = () => {
           background: "linear-gradient(145deg, #1f0538, #2a0a4e)",
           padding: "50px 20px",
           borderRadius: "20px",
-          width: "50%",
+          width: "90%", 
           maxWidth: "700px",
           boxShadow: "0 0 40px rgba(241, 242, 234, 0.96)",
           animation: "fadeIn 1s ease-in-out",
@@ -111,7 +140,7 @@ const PaymentPage = () => {
           <h4 style={{ color: "#ffcc00" }}>{movie?.title}</h4>
           <p>📍 {theaterName}</p>
           <p>
-            📅 {date} | 🕒 {time}
+            📅 {new Date(date).toLocaleDateString()} | 🕒 {time}
           </p>
           <p>🎟 Seats: {selectedSeats?.join(", ")}</p>
           <h5 className="mt-3" style={{ color: "#00ff99" }}>
@@ -128,13 +157,14 @@ const PaymentPage = () => {
 
           <div className="d-flex flex-column align-items-start gap-2">
             {["Credit Card", "Debit Card", "UPI", "Razorpay"].map((method) => (
-              <label key={method}>
+              <label key={method} style={{ cursor: "pointer" }}>
                 <input
                   type="radio"
                   name="payment"
                   value={method}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                />{" "}
+                  style={{ marginRight: "10px" }}
+                />
                 {method === "Credit Card"
                   ? "💳 Credit Card"
                   : method === "Debit Card"
@@ -190,13 +220,14 @@ const PaymentPage = () => {
               <h6>Select UPI App</h6>
               <div className="d-flex flex-column gap-2">
                 {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
-                  <label key={app}>
+                  <label key={app} style={{ cursor: "pointer" }}>
                     <input
                       type="radio"
                       name="upiApp"
                       value={app}
                       onChange={(e) => setUpiApp(e.target.value)}
-                    />{" "}
+                      style={{ marginRight: "10px" }}
+                    />
                     {app}
                   </label>
                 ))}
