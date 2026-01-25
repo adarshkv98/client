@@ -21,7 +21,6 @@ function RegisterPage() {
       alert("Registration failed!");
     }
   };
-
   return (
     <div
       className="d-flex justify-content-center align-items-center min-vh-100"
