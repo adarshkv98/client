@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import axios from "../api/axiosConfig";
+import api from "../api/axiosConfig";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function ProfilePage() {
@@ -12,10 +12,14 @@ function ProfilePage() {
 
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("https://server-eom8.onrender.com/api/bookings/my", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setBookings(res.data.bookings || []);
+       
+        const res = await api.get("/bookings/my");
+        
+        console.log("Bookings Data:", res.data); 
+
+        
+        setBookings(Array.isArray(res.data) ? res.data : res.data.bookings || []);
+      
       } catch (err) {
         console.error("Error fetching bookings:", err);
       }
@@ -98,7 +102,8 @@ function ProfilePage() {
                         <strong>💺 Seats:</strong> {b.seats.join(", ")}
                       </p>
                       <p>
-                        <strong>💰 Amount:</strong> ₹{b.totalPrice || 0}
+                        {/* totalAmount or totalPrice check */}
+                        <strong>💰 Amount:</strong> ₹{b.totalPrice || b.totalAmount || 0}
                       </p>
                       <small className="text-muted">
                         Booked on {new Date(b.createdAt).toLocaleString()}
