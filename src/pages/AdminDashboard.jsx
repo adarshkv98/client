@@ -78,7 +78,8 @@ const AdminDashboard = () => {
       setUsers(Array.isArray(u.data) ? u.data : u.data.users || u.data);
     } catch (err) {
       console.error("Error loading admin data:", err);
-      alert("Failed to load admin data");
+      // If this fails, it's likely because the user is not an Admin in MongoDB
+      alert("Failed to load admin data. Ensure you have 'isAdmin: true' in MongoDB.");
     }
   };
 
@@ -102,11 +103,12 @@ const AdminDashboard = () => {
         rating: Number(movieForm.rating),
       };
 
+      // ✅ Changed to relative path to use axios interceptor (Token)
       if (editMovieId) {
-        await api.put(`https://server-eom8.onrender.com/api/movies/${editMovieId}`, payload);
+        await api.put(`/movies/${editMovieId}`, payload);
         setEditMovieId(null);
       } else {
-        await api.post("https://server-eom8.onrender.com/api/movies", payload);
+        await api.post("/movies", payload);
       }
 
       setMovieForm({
@@ -149,7 +151,8 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete movie?")) return;
 
     try {
-      await api.delete(`https://server-eom8.onrender.com/api/movies/${id}`);
+      // ✅ Changed to relative path
+      await api.delete(`/movies/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
@@ -178,11 +181,12 @@ const AdminDashboard = () => {
         ],
       };
 
+      // ✅ Changed to relative path
       if (editTheaterId) {
-        await api.put(`https://server-eom8.onrender.com/api/theaters/${editTheaterId}`, payload);
+        await api.put(`/theaters/${editTheaterId}`, payload);
         setEditTheaterId(null);
       } else {
-        await api.post("https://server-eom8.onrender.com/api/theaters", payload);
+        await api.post("/theaters", payload);
       }
 
       setTheaterForm({ name: "", city: "", address: "", screens: 1 });
@@ -209,7 +213,8 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete theater?")) return;
 
     try {
-      await api.delete(`https://server-eom8.onrender.com/api/theaters/${id}`);
+      // ✅ Changed to relative path
+      await api.delete(`/theaters/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
@@ -229,11 +234,12 @@ const AdminDashboard = () => {
         pricePerSeat: Number(showtimeForm.pricePerSeat),
       };
 
+      // ✅ Changed to relative path
       if (editShowtimeId) {
-        await api.put(`https://server-eom8.onrender.com/api/showtimes/${editShowtimeId}`, payload);
+        await api.put(`/showtimes/${editShowtimeId}`, payload);
         setEditShowtimeId(null);
       } else {
-        await api.post("https://server-eom8.onrender.com/api/showtimes", payload);
+        await api.post("/showtimes", payload);
       }
 
       setShowtimeForm({
@@ -270,7 +276,8 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete showtime?")) return;
 
     try {
-      await api.delete(`https://server-eom8.onrender.com/api/showtimes/${id}`);
+      // ✅ Changed to relative path
+      await api.delete(`/showtimes/${id}`);
       fetchAll();
     } catch (err) {
       console.error(err);
