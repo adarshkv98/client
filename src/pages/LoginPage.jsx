@@ -16,7 +16,7 @@ function LoginPage() {
   e.preventDefault();
   setLoading(true);
   try {
-    const res = await axios.post("https://server-eom8.onrender.com/api/login", { email, password });
+    const res = await axios.post("/login", { email, password });
 
     if (res.data && res.data.user && res.data.token) {
       login(res.data); // save user + token to context/localStorage

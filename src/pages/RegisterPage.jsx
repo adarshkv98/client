@@ -13,7 +13,7 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://server-eom8.onrender.com/api/register", { name, email, password, mobilenumber });
+      await axios.post("/register", { name, email, password, mobilenumber });
       alert("Registration successful!");
       navigate("/login");
     } catch (err) {
