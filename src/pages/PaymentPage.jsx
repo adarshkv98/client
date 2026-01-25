@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import api from "../api/axiosConfig"; 
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
- 
+  
   const { movie, theater, date, time, selectedSeats, totalAmount, showtime } =
     location.state || {};
 
@@ -26,7 +25,7 @@ const PaymentPage = () => {
     setTheaterName(theater?.name || "Unknown Theater");
   }, [theater]);
 
- 
+
   const saveBookingToDatabase = async (paymentId = "N/A") => {
     try {
       if (!showtime) {
@@ -40,13 +39,14 @@ const PaymentPage = () => {
         showtime: showtime, 
         seats: selectedSeats,
         totalPrice: totalAmount,
-        paymentId: paymentId, 
+        paymentId: paymentId,
         date: date,
         time: time
       };
 
-      console.log("Saving Booking:", bookingData); 
-      // Backend Call
+      console.log("Saving Booking:", bookingData);
+
+      // Backend Call to save booking
       await api.post("/bookings", bookingData);
 
       alert("✅ Payment & Booking Successful!");
@@ -69,7 +69,8 @@ const PaymentPage = () => {
     // --- RAZORPAY LOGIC ---
     if (paymentMethod === "Razorpay") {
       try {
-        const { data } = await api.post("/payment/orders", {
+        
+        const { data } = await api.post("/payments/orders", {
           amount: totalAmount,
         });
 
@@ -81,7 +82,7 @@ const PaymentPage = () => {
           description: `Payment for ${movie?.title}`,
           order_id: data.id,
           handler: function (response) {
-            
+            // ✅ On Success, Save Booking
             saveBookingToDatabase(response.razorpay_payment_id);
           },
           prefill: {
@@ -97,12 +98,13 @@ const PaymentPage = () => {
         const razor = new window.Razorpay(options);
         razor.open();
       } catch (error) {
-        console.error(error);
-        alert("Payment Failed. Try again.");
+        console.error("Razorpay Error:", error);
+        alert("Payment Failed. Check console for details.");
       }
       return;
     }
 
+    
     await saveBookingToDatabase(`DUMMY_${paymentMethod.toUpperCase()}_ID`);
   };
 
@@ -126,7 +128,7 @@ const PaymentPage = () => {
           background: "linear-gradient(145deg, #1f0538, #2a0a4e)",
           padding: "50px 20px",
           borderRadius: "20px",
-          width: "90%", 
+          width: "90%",
           maxWidth: "700px",
           boxShadow: "0 0 40px rgba(241, 242, 234, 0.96)",
           animation: "fadeIn 1s ease-in-out",
