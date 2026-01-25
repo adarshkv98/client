@@ -35,11 +35,11 @@ function TheaterPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const theaterRes = await axios.get("/theaters");
+        const theaterRes = await axios.get("https://server-eom8.onrender.com/api/theaters");
         const fetchedTheaters = theaterRes.data.theaters || theaterRes.data || [];
 
         if (movieId) {
-          const movieRes = await axios.get(`/movies/${movieId}`);
+          const movieRes = await axios.get(`https://server-eom8.onrender.com/api/movies/${movieId}`);
           setMovie(movieRes.data);
         }
 

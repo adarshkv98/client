@@ -31,12 +31,12 @@ const SeatSelectionPage = () => {
     const fetchData = async () => {
       try {
         if (movieId) {
-          const movieRes = await axios.get(`/movies/${movieId}`);
+          const movieRes = await axios.get(`https://server-eom8.onrender.com/api/movies/${movieId}`);
           setMovie(movieRes.data);
         }
 
         if (theaterId) {
-          const theaterRes = await axios.get(`/theaters/${theaterId}`);
+          const theaterRes = await axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`);
           const tData =
             theaterRes.data.theater ||
             theaterRes.data.data ||
@@ -47,7 +47,7 @@ const SeatSelectionPage = () => {
 
         // ✅ Fetch booked seats
         const bookedRes = await axios.get(
-          `/bookings/booked?movieId=${movieId}&theaterId=${theaterId}&date=${date}&time=${encodeURIComponent(time)}`
+          `https://server-eom8.onrender.com/api/bookings/booked?movieId=${movieId}&theaterId=${theaterId}&date=${date}&time=${encodeURIComponent(time)}`
         );
         setBookedSeats(bookedRes.data.bookedSeats || []);
       } catch (err) {

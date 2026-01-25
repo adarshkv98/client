@@ -11,7 +11,7 @@ function MovieDetailsPage() {
   useEffect(() => {
     const fetchMovie = async () => {
       try {
-        const res = await axios.get(`/movies/${id}`);
+        const res = await axios.get(`https://server-eom8.onrender.com/api/movies/${id}`);
         setMovie(res.data);
       } catch (err) {
         console.error("Error fetching movie details:", err);

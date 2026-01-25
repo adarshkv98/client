@@ -12,7 +12,7 @@ function ProfilePage() {
 
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("/bookings/my", {
+        const res = await axios.get("https://server-eom8.onrender.com/api/bookings/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setBookings(res.data.bookings || []);

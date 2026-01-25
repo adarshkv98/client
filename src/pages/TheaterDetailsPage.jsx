@@ -11,7 +11,7 @@ function TheaterDetailsPage() {
   useEffect(() => {
     const fetchTheater = async () => {
       try {
-        const res = await axios.get(`/theaters/${id}`);
+        const res = await axios.get(`https://server-eom8.onrender.com/api/theaters/${id}`);
         setTheater(res.data.theater);
       } catch (err) {
         console.error("Error fetching theater:", err);

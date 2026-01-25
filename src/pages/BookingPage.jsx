@@ -20,11 +20,11 @@ function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const movieRes = await axios.get(`/movies/${id}`);
+        const movieRes = await axios.get(`https://server-eom8.onrender.com/api/movies/${id}`);
         setMovie(movieRes.data);
 
         if (theaterId) {
-          const theaterRes = await axios.get(`/theaters/${theaterId}`);
+          const theaterRes = await axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`);
           setTheater(theaterRes.data);
         } else if (theaterName) {
           // ✅ fallback if passed directly
