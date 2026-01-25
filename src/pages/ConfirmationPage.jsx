@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -9,6 +9,15 @@ const ConfirmationPage = () => {
   // Data from previous page
   const { movie, theater, date, time, selectedSeats, totalAmount } =
     location.state || {};
+
+  // ✅ Safety Check: If no data (e.g., user refreshed the page), go back to Home
+  useEffect(() => {
+    if (!location.state) {
+      navigate("/"); // Or '/dashboard'
+    }
+  }, [location.state, navigate]);
+
+  if (!location.state) return null; // Prevent rendering empty page before redirect
 
   return (
     <div
@@ -51,7 +60,9 @@ const ConfirmationPage = () => {
           }}
         >
           <img
+            // ✅ FIX: Changed 'poster' to 'posterUrl' to match Backend Model
             src={
+              movie?.posterUrl ||
               movie?.poster ||
               "https://cdn-icons-png.flaticon.com/512/744/744922.png"
             }
@@ -83,7 +94,8 @@ const ConfirmationPage = () => {
               left: 0,
               width: "10px",
               background:
-                "radial-gradient(circle at right, transparent 8px, #fff 9px)",
+                "radial-gradient(circle at left, transparent 5px, #fff 6px)", // Tweaked for better look
+              borderLeft: "2px dashed #ddd",
             }}
           ></div>
 
@@ -129,7 +141,7 @@ const ConfirmationPage = () => {
           <div className="text-center mt-3">
             <button
               className="btn btn-danger px-4 mt-2"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")} // Redirect to Home
             >
               🎬 Book Another Movie
             </button>

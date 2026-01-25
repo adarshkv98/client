@@ -40,11 +40,11 @@ function BookingPage() {
           setTheater({ name: theaterName || "Unknown Theater" });
         }
 
-        // 2. Find matching Showtime (ROBUST METHOD)
+        // 2. Find matching Showtime (FINAL FIX)
         if (showtimeRes.data) {
             const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
             
-            // Step A: Filter by Movie, Theater, and Date first
+            // Step A: Filter by Movie and Theater first
             const candidates = allShowtimes.filter((s) => {
                 const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
                 const sTheaterId = typeof s.theater === 'object' ? s.theater._id : s.theater;
@@ -52,38 +52,45 @@ function BookingPage() {
                 // ID Check
                 if (String(sMovieId) !== String(id)) return false;
                 if (theaterId && String(sTheaterId) !== String(theaterId)) return false;
-
-                // Date Check (Compare YYYY-MM-DD to avoid timezone shifts)
-                const sDate = new Date(s.startTime).toISOString().split('T')[0];
-                const uDate = new Date(date).toISOString().split('T')[0];
-                return sDate === uDate;
+                return true;
             });
 
-            console.log(`🎬 Found ${candidates.length} shows for this date/movie/theater.`);
+            console.log(`🎬 Candidates found: ${candidates.length}`);
 
-            // Step B: Find exact time match
+            // Step B: Smart Match (Date & Time)
             let foundShowtime = candidates.find((s) => {
-                const showDateObj = new Date(s.startTime);
-                const targetTime = time.replace(/\s/g, '').toLowerCase(); // e.g., "10:00am"
+                // Use Local Browser Time for Date Comparison (Safest for UI)
+                const sDate = new Date(s.startTime).toDateString();
+                const uDate = new Date(date).toDateString();
 
-                // Create time strings in UTC and IST
+                if (sDate !== uDate) return false;
+
+                // Time Comparison: Remove all spaces and special chars
+                // Example: "10:00 AM" -> "1000am"
+                const cleanTargetTime = time.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                
+                // Check against UTC, IST, and Local
+                const dateObj = new Date(s.startTime);
                 const options = { hour: "numeric", minute: "numeric", hour12: true };
                 
-                const timeUTC = showDateObj.toLocaleTimeString("en-US", { ...options, timeZone: "UTC" }).replace(/\s/g, '').toLowerCase();
-                const timeIST = showDateObj.toLocaleTimeString("en-US", { ...options, timeZone: "Asia/Kolkata" }).replace(/\s/g, '').toLowerCase();
-                const timeLocal = showDateObj.toLocaleTimeString("en-US", options).replace(/\s/g, '').toLowerCase();
+                const timeUTC = dateObj.toLocaleTimeString("en-US", { ...options, timeZone: "UTC" }).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                const timeIST = dateObj.toLocaleTimeString("en-US", { ...options, timeZone: "Asia/Kolkata" }).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                const timeLocal = dateObj.toLocaleTimeString("en-US", options).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-                // Check if ANY match
-                return (timeUTC === targetTime) || (timeIST === targetTime) || (timeLocal === targetTime);
+                return (cleanTargetTime === timeUTC) || (cleanTargetTime === timeIST) || (cleanTargetTime === timeLocal);
             });
 
-            // Step C: Fallback Logic (The Safety Net)
+            // Step C: Fallback (If exact time fails, take the ONLY show on that date)
             if (!foundShowtime) {
-                if (candidates.length === 1) {
-                    console.log("⚠️ Exact time match failed, but only 1 show exists. Using Fallback.");
-                    foundShowtime = candidates[0];
-                } else if (candidates.length > 1) {
-                    console.warn("❌ Multiple shows found, but time didn't match exactly. Cannot guess.");
+                const dateMatches = candidates.filter(s => 
+                    new Date(s.startTime).toDateString() === new Date(date).toDateString()
+                );
+
+                if (dateMatches.length === 1) {
+                    console.log("⚠️ Exact time mismatch, but found 1 valid show for this date. Using it.");
+                    foundShowtime = dateMatches[0];
+                } else if (dateMatches.length > 1) {
+                    console.warn("❌ Multiple shows on this date. Cannot guess correctly.");
                 }
             }
 
@@ -110,7 +117,8 @@ function BookingPage() {
     }
 
     if (!showtimeId) {
-        alert("Error: Showtime not verified. Please try selecting the show again from the home page.");
+        // Detailed error for debugging
+        alert(`Error: Showtime not verified.\n\nDate: ${new Date(date).toLocaleDateString()}\nTime: ${time}\n\nPlease go back and select the show again.`);
         return;
     }
 
