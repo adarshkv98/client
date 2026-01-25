@@ -21,6 +21,9 @@ function BookingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("🔍 Looking for Showtime...");
+        console.log("URL Data:", { id, theaterId, date, time });
+
         // 1. Fetch Movie & Theater
         const [movieRes, theaterRes, showtimeRes] = await Promise.all([
           axios.get(`/movies/${id}`),
@@ -37,40 +40,52 @@ function BookingPage() {
           setTheater({ name: theaterName || "Unknown Theater" });
         }
 
-        
+        // 2. Find matching Showtime
         if (showtimeRes.data) {
             const allShowtimes = Array.isArray(showtimeRes.data) ? showtimeRes.data : showtimeRes.data.showtimes;
             
             const foundShowtime = allShowtimes.find((s) => {
-              
-                const movieMatch = s.movie?._id === id || s.movie === id;
-                const theaterMatch = s.theater?._id === theaterId || s.theater === theaterId;
+                // Handle populated objects or string IDs
+                const sMovieId = typeof s.movie === 'object' ? s.movie._id : s.movie;
+                const sTheaterId = typeof s.theater === 'object' ? s.theater._id : s.theater;
 
-               
-                const showDate = new Date(s.startTime).toLocaleDateString();
-                const selectedDate = new Date(date).toLocaleDateString();
+                // 1. Check ID Match (Convert to String to be safe)
+                const movieMatch = String(sMovieId) === String(id);
+                const theaterMatch = String(sTheaterId) === String(theaterId);
+
+                // 2. Check Date Match
+                // Using 'toDateString' to ignore time components and timezone shifts
+                const showDateObj = new Date(s.startTime);
+                const urlDateObj = new Date(date);
+                const dateMatch = showDateObj.toDateString() === urlDateObj.toDateString();
                 
-                
-                const showTimeFormatted = new Date(s.startTime).toLocaleTimeString("en-US", {
+                // 3. Check Time Match
+                const showTimeFormatted = showDateObj.toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "numeric",
                     hour12: true,
                 });
 
-                
-                return (
-                    movieMatch &&
-                    theaterMatch &&
-                    showDate === selectedDate &&
-                    showTimeFormatted.replace(/\s/g, '') === time.replace(/\s/g, '')
-                );
+                // Remove spaces and convert to lowercase for better matching
+                // e.g. "10:00 AM" becomes "10:00am"
+                const cleanShowTime = showTimeFormatted.replace(/\s/g, '').toLowerCase();
+                const cleanUrlTime = time.replace(/\s/g, '').toLowerCase();
+                const timeMatch = cleanShowTime === cleanUrlTime;
+
+                // Debugging Log (Browser Console-ൽ കാണാം)
+                if (movieMatch && theaterMatch && dateMatch) {
+                   console.log(`Checking Time: DB(${cleanShowTime}) vs URL(${cleanUrlTime}) -> Match? ${timeMatch}`);
+                }
+
+                return movieMatch && theaterMatch && dateMatch && timeMatch;
             });
 
             if (foundShowtime) {
                 console.log("✅ Found Showtime ID:", foundShowtime._id);
                 setShowtimeId(foundShowtime._id);
             } else {
-                console.warn("❌ Showtime ID not found for this slot!");
+                console.warn("❌ Showtime ID not found! Check Date/Time formats.");
+                // Fallback: If strict match fails, try relaxed match (optional)
             }
         }
 
@@ -89,7 +104,8 @@ function BookingPage() {
     }
 
     if (!showtimeId) {
-        alert("Error: Could not verify showtime. Please try again.");
+        // More descriptive error
+        alert("Error: Showtime not verified. Check console for details.");
         return;
     }
 
@@ -99,12 +115,12 @@ function BookingPage() {
       location: theater?.location || {},
     };
 
-   
+    
     navigate("/payment", {
       state: {
         movie,
         theater: theaterData,
-        showtime: showtimeId, 
+        showtime: showtimeId, // Passing the ID
         date,
         time,
         selectedSeats,
