@@ -26,7 +26,7 @@ function BookingPage() {
         // 1. Fetch Movie & Theater
         const [movieRes, theaterRes, showtimeRes] = await Promise.all([
           axios.get(`https://server-eom8.onrender.com/api/movies/${id}`),
-          theaterId ? axios.get(`/theaters/${theaterId}`) : Promise.resolve(null),
+          theaterId ? axios.get(`https://server-eom8.onrender.com/api/theaters/${theaterId}`) : Promise.resolve(null),
           axios.get("https://server-eom8.onrender.com/api/showtimes"),
         ]);
 
